@@ -8,7 +8,7 @@ pub struct Point2D {
     pub y: f64,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec3D {
     pub x: f64,
     pub y: f64,
@@ -18,6 +18,26 @@ pub struct Vec3D {
 impl Vec3D {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn dot(&self, other: Self) -> f64 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    pub fn length(self) -> f64 {
+        self.dot(self).sqrt()
+    }
+
+    pub fn normalize(self) -> Vec3D {
+        self / self.length()
+    }
+
+    pub fn format_color(&self) -> Vec3D {
+        Vec3D {
+            x: self.x * 255.999,
+            y: self.y * 255.999,
+            z: self.z * 255.999,
+        }
     }
 }
 
@@ -70,18 +90,50 @@ impl<'this, 'other> Sub<&'other Vec3D> for &'this Vec3D {
 }
 
 impl Mul for Vec3D {
-    type Output = f64;
+    type Output = Vec3D;
 
-    fn mul(self, other: Self) -> f64 {
-        self.x * other.x + self.y * other.y + self.z * other.z
+    fn mul(self, other: Self) -> Vec3D {
+        Self {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
     }
 }
 
 impl<'this, 'other> Mul<&'other Vec3D> for &'this Vec3D {
-    type Output = f64;
+    type Output = Vec3D;
 
-    fn mul(self, other: &'other Vec3D) -> f64 {
-        self.x * other.x + self.y * other.y + self.z * other.z
+    fn mul(self, other: &'other Vec3D) -> Vec3D {
+        Vec3D {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
+
+impl Mul<Vec3D> for f64 {
+    type Output = Vec3D;
+
+    fn mul(self, other: Vec3D) -> Vec3D {
+        Vec3D {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
+        }
+    }
+}
+
+impl<'other> Mul<&'other Vec3D> for f64 {
+    type Output = Vec3D;
+
+    fn mul(self, other: &'other Vec3D) -> Vec3D {
+        Vec3D {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
+        }
     }
 }
 
@@ -167,7 +219,14 @@ mod tests {
                 z: -1.0
             }
         );
-        assert_eq!(&a * &b, 6.0);
+        assert_eq!(
+            &a * &b,
+            Vec3D {
+                x: 2.0,
+                y: 2.0,
+                z: 2.0
+            }
+        );
         assert_eq!(
             &a * 2.0,
             Vec3D {
@@ -201,7 +260,7 @@ mod tests {
         };
 
         assert_eq!(
-            a.clone() + b.clone(),
+            a + b,
             Vec3D {
                 x: 3.0,
                 y: 3.0,
@@ -209,14 +268,21 @@ mod tests {
             }
         );
         assert_eq!(
-            a.clone() - b.clone(),
+            a - b,
             Vec3D {
                 x: -1.0,
                 y: -1.0,
                 z: -1.0
             }
         );
-        assert_eq!(a.clone() * b.clone(), 6.0);
+        assert_eq!(
+            a * b,
+            Vec3D {
+                x: 2.0,
+                y: 2.0,
+                z: 2.0
+            }
+        );
         assert_eq!(
             a * 2.0,
             Vec3D {

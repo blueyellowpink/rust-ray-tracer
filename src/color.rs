@@ -18,7 +18,11 @@ impl fmt::Display for Color {
             Color::Green => write!(f, "0 255 0"),
             Color::Blue => write!(f, "0 0 255"),
             Color::Black => write!(f, "0 0 0"),
-            Color::RGB(vec3) => write!(f, "{} {} {}", vec3.x, vec3.y, vec3.z),
+            Color::RGB(vec3) => write!(
+                f,
+                "{} {} {}",
+                vec3.x as usize, vec3.y as usize, vec3.z as usize
+            ),
         }
     }
 }

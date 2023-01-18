@@ -1,4 +1,8 @@
-use rust_ray_tracer::{color::Color, vec::Point2D};
+use rust_ray_tracer::{
+    color::Color,
+    ray::Ray,
+    vec::{Point2D, Point3D, Vec3D},
+};
 
 const WIDTH: usize = 640;
 const HEIGHT: usize = 480;
@@ -69,14 +73,57 @@ impl Image {
     }
 }
 
-struct CameraParameter {
-    position: Point2D,
-    focal: isize,
+struct Camera {
+    position: Point3D,
+    focal_length: f64,
+    viewport_width: f64,
+    viewport_height: f64,
+}
+
+impl Camera {
+    pub fn new(
+        position: Point3D,
+        focal_length: f64,
+        viewport_width: f64,
+        viewport_height: f64,
+    ) -> Self {
+        Self {
+            position,
+            focal_length,
+            viewport_width,
+            viewport_height,
+        }
+    }
 }
 
 fn main() {
     let image = Image::new(WIDTH, HEIGHT);
-    println!("{}", image.aspect_ratio);
-    // image.fill_center_circle(50.0);
-    // image.write_ppm_stdout(Color::Red, Color::Green);
+    let origin = Point3D::new(0.0, 0.0, 0.0);
+    let viewport_height = 2.0;
+    let camera = Camera::new(
+        origin,
+        1.0,
+        image.aspect_ratio * viewport_height,
+        viewport_height,
+    );
+    let horizontal = Vec3D::new(camera.viewport_width, 0.0, 0.0);
+    let vertical = Vec3D::new(0.0, camera.viewport_height, 0.0);
+    let lower_left_corner =
+        origin - horizontal / 2.0 - vertical / 2.0 - Vec3D::new(0.0, 0.0, camera.focal_length);
+
+    println!("P3");
+    println!("{} {}", image.width, image.height);
+    println!("255");
+    for y in (0..HEIGHT).rev() {
+        for x in 0..WIDTH {
+            let u: f64 = (x as f64) / ((WIDTH - 1) as f64);
+            let v: f64 = (y as f64) / ((HEIGHT - 1) as f64);
+            let ray = Ray::new(
+                origin,
+                lower_left_corner + u * horizontal + v * vertical - origin,
+            );
+            let color = ray.color();
+            // println!("{}", color);
+        }
+    }
 }
