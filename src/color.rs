@@ -33,14 +33,13 @@ impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Color::RGB(vec3) => {
-                let vec3 = vec3.format_color();
                 write!(
                     f,
                     "{} {} {}",
                     vec3.x as usize, vec3.y as usize, vec3.z as usize
                 )
             }
-            _ => write!(f, "{}", Color::RGB(self.to_vec3d())),
+            _ => write!(f, "{}", Color::RGB(self.to_vec3d().format_color(1))),
         }
     }
 }

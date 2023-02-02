@@ -9,6 +9,7 @@ use rust_ray_tracer::{
 
 const WIDTH: usize = 640;
 const HEIGHT: usize = 480;
+const SAMPLES_PER_PIXEL: usize = 100;
 
 trait RayTraceable {
     fn trace_to_ppm_with(&self, camera: Camera, world: World);
@@ -82,26 +83,26 @@ impl Image {
 
 impl RayTraceable for Image {
     fn trace_to_ppm_with(&self, camera: Camera, world: World) {
-        let horizontal = Vec3D::new(camera.viewport_width, 0.0, 0.0);
-        let vertical = Vec3D::new(0.0, camera.viewport_height, 0.0);
-        let lower_left_corner = camera.position
-            - horizontal / 2.0
-            - vertical / 2.0
-            - Vec3D::new(0.0, 0.0, camera.focal_length);
-
         println!("P3");
         println!("{} {}", self.width, self.height);
         println!("255");
         for y in (0..self.height).rev() {
             for x in 0..self.width {
-                let u: f64 = (x as f64) / ((self.width - 1) as f64);
-                let v: f64 = (y as f64) / ((self.height - 1) as f64);
-                let ray = Ray::new(
-                    camera.position,
-                    lower_left_corner + u * horizontal + v * vertical - camera.position,
+                let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..SAMPLES_PER_PIXEL {
+                    /* let random_u = ;
+                    let random_v = ; */
+                    let u: f64 = (x as f64) / ((self.width - 1) as f64);
+                    let v: f64 = (y as f64) / ((self.height - 1) as f64);
+                    let ray = camera.get_ray(u, v);
+                    let color = ray.color(&world).to_vec3d();
+                    sum_color = sum_color + color;
+                    // println!("{}", color.format_color(1));
+                }
+                println!(
+                    "{}",
+                    Color::RGB(sum_color.format_color(SAMPLES_PER_PIXEL as u64))
                 );
-                let color = ray.color(&world);
-                println!("{}", color);
             }
         }
     }
@@ -116,10 +117,9 @@ fn main() {
     )));
 
     let image = Image::new(WIDTH, HEIGHT);
-    let origin = Point3D::new(0.0, 0.0, 0.0);
     let viewport_height = 2.0;
     let camera = Camera::new(
-        origin,
+        Point3D::new(0.0, 0.0, 0.0),
         1.0,
         image.aspect_ratio * viewport_height,
         viewport_height,
