@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use rust_ray_tracer::{
     camera::Camera,
     color::Color,
@@ -9,7 +11,7 @@ use rust_ray_tracer::{
 
 const WIDTH: usize = 640;
 const HEIGHT: usize = 480;
-const SAMPLES_PER_PIXEL: usize = 100;
+const SAMPLES_PER_PIXEL: usize = 10;
 
 trait RayTraceable {
     fn trace_to_ppm_with(&self, camera: Camera, world: World);
@@ -83,26 +85,38 @@ impl Image {
 
 impl RayTraceable for Image {
     fn trace_to_ppm_with(&self, camera: Camera, world: World) {
+        let anti_alias = true;
+        let get_uv = |x, y, random_u, random_v| -> (f64, f64) {
+            let u: f64 = ((x as f64) + random_u) / ((self.width - 1) as f64);
+            let v: f64 = ((y as f64) + random_v) / ((self.height - 1) as f64);
+            (u, v)
+        };
+
         println!("P3");
         println!("{} {}", self.width, self.height);
         println!("255");
+
+        let mut rng = rand::thread_rng();
         for y in (0..self.height).rev() {
             for x in 0..self.width {
-                let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0);
-                for _ in 0..SAMPLES_PER_PIXEL {
-                    /* let random_u = ;
-                    let random_v = ; */
-                    let u: f64 = (x as f64) / ((self.width - 1) as f64);
-                    let v: f64 = (y as f64) / ((self.height - 1) as f64);
+                if anti_alias {
+                    let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0);
+                    for _ in 0..SAMPLES_PER_PIXEL {
+                        let (u, v) = get_uv(x, y, rng.gen(), rng.gen());
+                        let ray = camera.get_ray(u, v);
+                        let color = ray.color(&world).to_vec3d();
+                        sum_color = sum_color + color;
+                    }
+                    println!(
+                        "{}",
+                        Color::RGB(sum_color.format_color(SAMPLES_PER_PIXEL as u64))
+                    );
+                } else {
+                    let (u, v) = get_uv(x, y, 0.0, 0.0);
                     let ray = camera.get_ray(u, v);
                     let color = ray.color(&world).to_vec3d();
-                    sum_color = sum_color + color;
-                    // println!("{}", color.format_color(1));
+                    println!("{}", Color::RGB(color.format_color(1)));
                 }
-                println!(
-                    "{}",
-                    Color::RGB(sum_color.format_color(SAMPLES_PER_PIXEL as u64))
-                );
             }
         }
     }
