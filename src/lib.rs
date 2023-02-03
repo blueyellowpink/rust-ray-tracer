@@ -10,32 +10,23 @@ pub mod hit {
     };
 
     pub struct HitRecord {
-        pub point: Point3D,
+        pub hit_point: Point3D,
         pub normal: Vec3D,
         pub t: f64,
         pub front_face: bool,
     }
 
     impl HitRecord {
-        pub fn new(point: Point3D, normal: Vec3D, t: f64, ray: &Ray) -> Self {
+        pub fn new(hit_point: Point3D, normal: Vec3D, t: f64, ray: &Ray) -> Self {
             let front_face = ray.direction.dot(normal) < 0.0;
             let normal = if front_face { normal } else { -1.0 * normal };
             Self {
-                point,
+                hit_point,
                 normal,
                 t,
                 front_face,
             }
         }
-
-        /* pub fn set_face_normal(&mut self, ray: &Ray, normal: Vec3D) {
-            self.front_face = ray.direction.dot(normal) < 0.0;
-            self.normal = if self.front_face {
-                normal
-            } else {
-                -1.0 * normal
-            };
-        } */
     }
 
     pub trait Hit {
@@ -82,9 +73,9 @@ pub mod object {
                     return None;
                 }
             }
-            let point = ray.at(t);
-            let normal = (point - self.center) / self.radius;
-            let hit_record = HitRecord::new(point, normal, t, ray);
+            let hit_point = ray.at(t);
+            let normal = (hit_point - self.center) / self.radius;
+            let hit_record = HitRecord::new(hit_point, normal, t, ray);
 
             Some(hit_record)
         }

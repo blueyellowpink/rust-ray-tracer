@@ -21,9 +21,15 @@ impl Ray {
         self.origin + t * self.direction
     }
 
-    pub fn color(&self, world: &World) -> Color {
+    pub fn color(&self, world: &World, ray_bounce_depth: usize) -> Color {
+        if ray_bounce_depth <= 0 {
+            return Color::Black;
+        }
+
         if let Some(hit_record) = world.hit(self, 0.0, f64::INFINITY) {
-            return Color::RGB(0.5 * (hit_record.normal + Color::new(1.0, 1.0, 1.0)));
+            let target = hit_record.hit_point + hit_record.normal + Vec3D::random_in_unit_sphere();
+            let ray = Self::new(hit_record.hit_point, target - hit_record.hit_point);
+            return Color::RGB(0.5 * ray.color(world, ray_bounce_depth - 1).to_vec3d());
         }
 
         let unit_direction: Vec3D = self.direction.normalize();

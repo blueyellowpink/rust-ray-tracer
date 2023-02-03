@@ -12,6 +12,8 @@ use rust_ray_tracer::{
 const WIDTH: usize = 640;
 const HEIGHT: usize = 480;
 const SAMPLES_PER_PIXEL: usize = 10;
+const MAX_RAY_BOUNCE_DEPTH: usize = 5;
+const ANTI_ALIAS: bool = true;
 
 trait RayTraceable {
     fn trace_to_ppm_with(&self, camera: Camera, world: World);
@@ -85,7 +87,6 @@ impl Image {
 
 impl RayTraceable for Image {
     fn trace_to_ppm_with(&self, camera: Camera, world: World) {
-        let anti_alias = true;
         let get_uv = |x, y, random_u, random_v| -> (f64, f64) {
             let u: f64 = ((x as f64) + random_u) / ((self.width - 1) as f64);
             let v: f64 = ((y as f64) + random_v) / ((self.height - 1) as f64);
@@ -99,12 +100,12 @@ impl RayTraceable for Image {
         let mut rng = rand::thread_rng();
         for y in (0..self.height).rev() {
             for x in 0..self.width {
-                if anti_alias {
+                if ANTI_ALIAS {
                     let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0);
                     for _ in 0..SAMPLES_PER_PIXEL {
                         let (u, v) = get_uv(x, y, rng.gen(), rng.gen());
                         let ray = camera.get_ray(u, v);
-                        let color = ray.color(&world).to_vec3d();
+                        let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
                         sum_color = sum_color + color;
                     }
                     println!(
@@ -114,7 +115,7 @@ impl RayTraceable for Image {
                 } else {
                     let (u, v) = get_uv(x, y, 0.0, 0.0);
                     let ray = camera.get_ray(u, v);
-                    let color = ray.color(&world).to_vec3d();
+                    let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
                     println!("{}", Color::RGB(color.format_color(1)));
                 }
             }

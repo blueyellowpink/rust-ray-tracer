@@ -1,4 +1,6 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Range, Sub};
+
+use rand::Rng;
 
 use crate::color::Color;
 
@@ -44,6 +46,24 @@ impl Vec3D {
             y: 255.999 * (self.y / (samples_per_pixel as f64)).clamp(0.0, 0.999),
             z: 255.999 * (self.z / (samples_per_pixel as f64)).clamp(0.0, 0.999),
         }
+    }
+
+    pub fn random(range: Range<f64>) -> Self {
+        let mut rng = rand::thread_rng();
+
+        Self {
+            x: rng.gen_range(range.clone()),
+            y: rng.gen_range(range.clone()),
+            z: rng.gen_range(range.clone()),
+        }
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        let mut v = Self::random(-1.0..1.0);
+        while v.length() >= 1.0 {
+            v = Self::random(-1.0..1.0);
+        }
+        v
     }
 }
 
