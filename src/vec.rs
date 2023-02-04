@@ -42,9 +42,18 @@ impl Vec3D {
 
     pub fn format_color(&self, samples_per_pixel: u64) -> Vec3D {
         Vec3D {
-            x: 255.999 * (self.x / (samples_per_pixel as f64)).clamp(0.0, 0.999),
-            y: 255.999 * (self.y / (samples_per_pixel as f64)).clamp(0.0, 0.999),
-            z: 255.999 * (self.z / (samples_per_pixel as f64)).clamp(0.0, 0.999),
+            x: 255.999
+                * (self.x / (samples_per_pixel as f64))
+                    .sqrt()
+                    .clamp(0.0, 0.999),
+            y: 255.999
+                * (self.y / (samples_per_pixel as f64))
+                    .sqrt()
+                    .clamp(0.0, 0.999),
+            z: 255.999
+                * (self.z / (samples_per_pixel as f64))
+                    .sqrt()
+                    .clamp(0.0, 0.999),
         }
     }
 

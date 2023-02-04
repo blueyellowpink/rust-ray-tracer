@@ -11,7 +11,7 @@ use rust_ray_tracer::{
 
 const WIDTH: usize = 640;
 const HEIGHT: usize = 480;
-const SAMPLES_PER_PIXEL: usize = 10;
+const SAMPLES_PER_PIXEL: usize = 50;
 const MAX_RAY_BOUNCE_DEPTH: usize = 5;
 const ANTI_ALIAS: bool = true;
 

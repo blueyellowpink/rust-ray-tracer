@@ -26,8 +26,10 @@ impl Ray {
             return Color::Black;
         }
 
-        if let Some(hit_record) = world.hit(self, 0.0, f64::INFINITY) {
-            let target = hit_record.hit_point + hit_record.normal + Vec3D::random_in_unit_sphere();
+        if let Some(hit_record) = world.hit(self, 0.001, f64::INFINITY) {
+            let target = hit_record.hit_point
+                + hit_record.normal
+                + Vec3D::random_in_unit_sphere().normalize();
             let ray = Self::new(hit_record.hit_point, target - hit_record.hit_point);
             return Color::RGB(0.5 * ray.color(world, ray_bounce_depth - 1).to_vec3d());
         }
