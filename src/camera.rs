@@ -1,7 +1,7 @@
 use crate::{
     color::Color,
     ray::Ray,
-    vec::{Point2D, Point3D, Vec3D},
+    vec::{Point3D, Vec3D},
 };
 
 pub struct Camera {

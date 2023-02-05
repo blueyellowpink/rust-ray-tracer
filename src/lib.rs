@@ -102,3 +102,9 @@ impl Hit for World {
         temp_rec
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub enum DiffuseRenderer {
+    LambertianReflection,
+    HemisphericalScattering,
+}
