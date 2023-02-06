@@ -3,6 +3,7 @@ use std::fmt;
 use crate::vec::Vec3D;
 
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub enum Color {
     Red,
     Green,
@@ -13,8 +14,8 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn new(red: f64, green: f64, blue: f64) -> Vec3D {
-        Vec3D::new(red, green, blue)
+    pub fn new(red: f64, green: f64, blue: f64) -> Color {
+        Color::RGB(Vec3D::new(red, green, blue))
     }
 
     pub fn to_vec3d(&self) -> Vec3D {

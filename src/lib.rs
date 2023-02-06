@@ -1,10 +1,14 @@
 pub mod camera;
 pub mod color;
+pub mod material;
 pub mod ray;
 pub mod vec;
 
 pub mod hit {
+    use std::rc::Rc;
+
     use crate::{
+        material::Scatter,
         ray::Ray,
         vec::{Point3D, Vec3D},
     };
@@ -12,17 +16,25 @@ pub mod hit {
     pub struct HitRecord {
         pub hit_point: Point3D,
         pub normal: Vec3D,
+        pub material: Rc<dyn Scatter>,
         pub t: f64,
         pub front_face: bool,
     }
 
     impl HitRecord {
-        pub fn new(hit_point: Point3D, normal: Vec3D, t: f64, ray: &Ray) -> Self {
+        pub fn new(
+            hit_point: Point3D,
+            normal: Vec3D,
+            material: Rc<dyn Scatter>,
+            t: f64,
+            ray: &Ray,
+        ) -> Self {
             let front_face = ray.direction.dot(normal) < 0.0;
             let normal = if front_face { normal } else { -1.0 * normal };
             Self {
                 hit_point,
                 normal,
+                material,
                 t,
                 front_face,
             }
@@ -35,21 +47,29 @@ pub mod hit {
 }
 
 pub mod object {
+    use std::rc::Rc;
+
     use crate::{
         hit::{Hit, HitRecord},
+        material::Scatter,
         ray::Ray,
         vec::Point3D,
     };
 
-    #[derive(Debug, Clone, Copy, PartialEq)]
+    #[derive(Clone)]
     pub struct Sphere {
         pub center: Point3D,
         pub radius: f64,
+        pub material: Rc<dyn Scatter>,
     }
 
     impl Sphere {
-        pub fn new(center: Point3D, radius: f64) -> Self {
-            Self { center, radius }
+        pub fn new(center: Point3D, radius: f64, material: Rc<dyn Scatter>) -> Self {
+            Self {
+                center,
+                radius,
+                material,
+            }
         }
     }
 
@@ -75,7 +95,7 @@ pub mod object {
             }
             let hit_point = ray.at(t);
             let normal = (hit_point - self.center) / self.radius;
-            let hit_record = HitRecord::new(hit_point, normal, t, ray);
+            let hit_record = HitRecord::new(hit_point, normal, self.material.clone(), t, ray);
 
             Some(hit_record)
         }
@@ -101,10 +121,4 @@ impl Hit for World {
 
         temp_rec
     }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum DiffuseRenderer {
-    LambertianReflection,
-    HemisphericalScattering,
 }

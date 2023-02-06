@@ -3,7 +3,7 @@ use crate::{
     hit::Hit,
     object::Sphere,
     vec::{Point3D, Vec3D},
-    DiffuseRenderer, World,
+    World,
 };
 
 #[derive(Debug, PartialEq)]
@@ -21,38 +21,28 @@ impl Ray {
         self.origin + t * self.direction
     }
 
-    pub fn color(
-        &self,
-        world: &World,
-        ray_bounce_depth: usize,
-        diffuse_renderer: DiffuseRenderer,
-    ) -> Color {
+    pub fn color(&self, world: &World, ray_bounce_depth: usize) -> Color {
         if ray_bounce_depth <= 0 {
             return Color::Black;
         }
 
         if let Some(hit_record) = world.hit(self, 0.001, f64::INFINITY) {
-            let target = match diffuse_renderer {
-                DiffuseRenderer::LambertianReflection => {
-                    hit_record.hit_point
-                        + hit_record.normal
-                        + Vec3D::random_in_unit_sphere().normalize()
-                }
-                DiffuseRenderer::HemisphericalScattering => {
-                    hit_record.hit_point + Vec3D::random_in_hemisphere(hit_record.normal)
-                }
-            };
-            let ray = Self::new(hit_record.hit_point, target - hit_record.hit_point);
-            return Color::RGB(
-                0.5 * ray
-                    .color(world, ray_bounce_depth - 1, diffuse_renderer)
-                    .to_vec3d(),
-            );
+            if let Some((attenuation, scattered_ray)) =
+                hit_record.material.scatter(self, &hit_record)
+            {
+                return Color::RGB(
+                    attenuation.to_vec3d()
+                        * scattered_ray.color(world, ray_bounce_depth - 1).to_vec3d(),
+                );
+            } else {
+                return Color::Black;
+            }
         }
 
         let unit_direction: Vec3D = self.direction.normalize();
         let t = 0.5 * (unit_direction.y + 1.0);
-        let color_vector = (1.0 - t) * Color::White.to_vec3d() + t * Color::new(0.5, 0.7, 1.0);
+        let color_vector =
+            (1.0 - t) * Color::White.to_vec3d() + t * Color::new(0.5, 0.7, 1.0).to_vec3d();
         Color::RGB(color_vector)
     }
 }

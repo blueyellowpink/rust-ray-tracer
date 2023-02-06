@@ -1,12 +1,15 @@
+use std::rc::Rc;
+
 use rand::Rng;
 
 use rust_ray_tracer::{
     camera::Camera,
     color::Color,
+    material::{Hemisphere, Lambertian},
     object::Sphere,
     ray::Ray,
     vec::{Point2D, Point3D, Vec3D},
-    DiffuseRenderer, World,
+    World,
 };
 
 const WIDTH: usize = 640;
@@ -87,7 +90,6 @@ impl Image {
 
 impl RayTraceable for Image {
     fn trace_to_ppm_with(&self, camera: Camera, world: World) {
-        let diffuse_renderer = DiffuseRenderer::HemisphericalScattering;
         let get_uv = |x, y, random_u, random_v| -> (f64, f64) {
             let u: f64 = ((x as f64) + random_u) / ((self.width - 1) as f64);
             let v: f64 = ((y as f64) + random_v) / ((self.height - 1) as f64);
@@ -102,13 +104,11 @@ impl RayTraceable for Image {
         for y in (0..self.height).rev() {
             for x in 0..self.width {
                 if ANTI_ALIAS {
-                    let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0);
+                    let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0).to_vec3d();
                     for _ in 0..SAMPLES_PER_PIXEL {
                         let (u, v) = get_uv(x, y, rng.gen(), rng.gen());
                         let ray = camera.get_ray(u, v);
-                        let color = ray
-                            .color(&world, MAX_RAY_BOUNCE_DEPTH, diffuse_renderer)
-                            .to_vec3d();
+                        let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
                         sum_color = sum_color + color;
                     }
                     println!(
@@ -118,9 +118,7 @@ impl RayTraceable for Image {
                 } else {
                     let (u, v) = get_uv(x, y, 0.0, 0.0);
                     let ray = camera.get_ray(u, v);
-                    let color = ray
-                        .color(&world, MAX_RAY_BOUNCE_DEPTH, diffuse_renderer)
-                        .to_vec3d();
+                    let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
                     println!("{}", Color::RGB(color.format_color(1)));
                 }
             }
@@ -129,11 +127,19 @@ impl RayTraceable for Image {
 }
 
 fn main() {
+    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+
     let mut world = World::new();
-    world.push(Box::new(Sphere::new(Point3D::new(0.0, 0.0, -1.0), 0.5)));
+    world.push(Box::new(Sphere::new(
+        Point3D::new(0.0, 0.0, -1.0),
+        0.5,
+        material_ground,
+    )));
     world.push(Box::new(Sphere::new(
         Point3D::new(0.0, -100.5, -1.0),
         100.0,
+        material_center,
     )));
 
     let image = Image::new(WIDTH, HEIGHT);

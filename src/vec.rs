@@ -84,6 +84,11 @@ impl Vec3D {
             -1.0 * in_unit_sphere
         }
     }
+
+    pub fn is_near_zero(self) -> bool {
+        const EPS: f64 = 1.0e-8;
+        self.x.abs() < EPS && self.y.abs() < EPS && self.z.abs() < EPS
+    }
 }
 
 impl Add for Vec3D {
