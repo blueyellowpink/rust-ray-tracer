@@ -89,6 +89,10 @@ impl Vec3D {
         const EPS: f64 = 1.0e-8;
         self.x.abs() < EPS && self.y.abs() < EPS && self.z.abs() < EPS
     }
+
+    pub fn reflect(self, n: Vec3D) -> Self {
+        self - 2.0 * self.dot(n) * n
+    }
 }
 
 impl Add for Vec3D {
