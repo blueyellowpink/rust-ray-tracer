@@ -52,18 +52,25 @@ impl Scatter for Hemisphere {
 
 pub struct Metal {
     albedo: Color,
+    fuzz: f64,
 }
 
 impl Metal {
-    pub fn new(color: Color) -> Self {
-        Self { albedo: color }
+    pub fn new(color: Color, fuzz: f64) -> Self {
+        Self {
+            albedo: color,
+            fuzz,
+        }
     }
 }
 
 impl Scatter for Metal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
         let reflected_vector = ray_in.direction.reflect(hit_record.normal).normalize();
-        let scattered_ray = Ray::new(hit_record.hit_point, reflected_vector);
+        let scattered_ray = Ray::new(
+            hit_record.hit_point,
+            reflected_vector + self.fuzz * Vec3D::random_in_unit_sphere(),
+        );
 
         if scattered_ray.direction.dot(hit_record.normal) > 0.0 {
             Some((self.albedo, scattered_ray))
