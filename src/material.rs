@@ -79,3 +79,35 @@ impl Scatter for Metal {
         }
     }
 }
+
+pub struct Dielectric {
+    refraction_index: f64,
+}
+
+impl Dielectric {
+    pub fn new(refraction_index: f64) -> Self {
+        Self { refraction_index }
+    }
+}
+
+impl Scatter for Dielectric {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        let refraction_ratio = if hit_record.front_face {
+            1.0 / self.refraction_index
+        } else {
+            self.refraction_index
+        };
+
+        let unit_direction = ray_in.direction.normalize();
+        let cos_theta = ((-1.0) * unit_direction).dot(hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta.powi(2)).sqrt();
+        let direction = if refraction_ratio * sin_theta > 1.0 {
+            unit_direction.reflect(hit_record.normal)
+        } else {
+            unit_direction.refract(hit_record.normal, refraction_ratio)
+        };
+        let scattered_ray = Ray::new(hit_record.hit_point, direction);
+
+        Some((Color::new(1.0, 1.0, 1.0), scattered_ray))
+    }
+}

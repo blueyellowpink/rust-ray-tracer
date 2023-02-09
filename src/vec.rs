@@ -90,8 +90,15 @@ impl Vec3D {
         self.x.abs() < EPS && self.y.abs() < EPS && self.z.abs() < EPS
     }
 
-    pub fn reflect(self, n: Vec3D) -> Self {
-        self - 2.0 * self.dot(n) * n
+    pub fn reflect(self, normal: Vec3D) -> Self {
+        self - 2.0 * self.dot(normal) * normal
+    }
+
+    pub fn refract(self, normal: Vec3D, etai_over_etat: f64) -> Self {
+        let cos_theta = ((-1.0) * self).dot(normal).min(1.0);
+        let r_out_perp = etai_over_etat * (self + cos_theta * normal);
+        let r_out_parallel = -(1.0 - r_out_perp.length().powi(2)).abs().sqrt() * normal;
+        r_out_perp + r_out_parallel
     }
 }
 
