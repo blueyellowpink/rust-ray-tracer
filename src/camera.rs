@@ -10,30 +10,36 @@ pub struct Camera {
     pub horizontal: Vec3D,
     pub vertical: Vec3D,
     pub focal_length: f64,
-    pub viewport_width: f64,
-    pub viewport_height: f64,
 }
 
 impl Camera {
     pub fn new(
-        origin: Point3D,
+        lookfrom: Vec3D,
+        lookat: Vec3D,
+        view_up: Vec3D,
+        vertical_field_of_view: f64,
         focal_length: f64,
-        viewport_width: f64,
-        viewport_height: f64,
+        aspect_ratio: f64,
     ) -> Self {
-        let horizontal = Vec3D::new(viewport_width, 0.0, 0.0);
-        let vertical = Vec3D::new(0.0, viewport_height, 0.0);
-        let lower_left_corner =
-            origin - horizontal / 2.0 - vertical / 2.0 - Vec3D::new(0.0, 0.0, focal_length);
+        // Vertical field-of-view in degrees
+        let theta = std::f64::consts::PI / 180.0 * vertical_field_of_view;
+        let viewport_height = 2.0 * (theta / 2.0).tan();
+        let viewport_width = aspect_ratio * viewport_height;
+
+        let cw = (lookfrom - lookat).normalize();
+        let cu = view_up.cross(cw).normalize();
+        let cv = cw.cross(cu);
+
+        let horizontal = viewport_width * cu;
+        let vertical = viewport_height * cv;
+        let lower_left_corner = lookfrom - horizontal / 2.0 - vertical / 2.0 - cw;
 
         Self {
-            origin,
+            origin: lookfrom,
             lower_left_corner,
             horizontal,
             vertical,
             focal_length,
-            viewport_width,
-            viewport_height,
         }
     }
 

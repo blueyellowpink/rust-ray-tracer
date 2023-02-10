@@ -12,6 +12,7 @@ use rust_ray_tracer::{
     World,
 };
 
+const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const WIDTH: usize = 256;
 const HEIGHT: usize = 144;
 const SAMPLES_PER_PIXEL: usize = 50;
@@ -126,11 +127,11 @@ impl RayTraceable for Image {
     }
 }
 
-fn main() {
+fn a() {
     let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
     let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
     let material_left = Rc::new(Dielectric::new(1.5));
-    let material_left_inner = Rc::new(Dielectric::new(1.0));
+    let material_left_inner = Rc::new(Dielectric::new(1.1));
     let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
 
     let mut world = World::new();
@@ -151,7 +152,7 @@ fn main() {
     ))); */
     world.push(Box::new(Sphere::new(
         Point3D::new(-1.0, 0.0, -1.0),
-        -0.4,
+        -0.45,
         material_left_inner,
     )));
     world.push(Box::new(Sphere::new(
@@ -161,12 +162,36 @@ fn main() {
     )));
 
     let image = Image::new(WIDTH, HEIGHT);
-    let viewport_height = 2.0;
     let camera = Camera::new(
-        Point3D::new(0.0, 0.0, 0.0),
+        Point3D::new(-2.0, 2.0, 1.0),
+        Point3D::new(0.0, 0.0, -1.0),
+        Vec3D::new(0.0, 1.0, 0.0),
+        20.0,
         1.0,
-        image.aspect_ratio * viewport_height,
-        viewport_height,
+        ASPECT_RATIO,
     );
     image.trace_to_ppm_with(camera, world);
+}
+
+fn b() {
+    let r: f64 = (std::f64::consts::PI / 4.0).cos();
+    let mut world = World::new();
+
+    let mat_left = Rc::new(Lambertian::new(Color::new(0.0, 0.0, 1.0)));
+    let mat_right = Rc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
+
+    let sphere_left = Sphere::new(Point3D::new(-r, 0.0, -1.0), r, mat_left);
+    let sphere_right = Sphere::new(Point3D::new(r, 0.0, -1.0), r, mat_right);
+
+    world.push(Box::new(sphere_left));
+    world.push(Box::new(sphere_right));
+
+    /* let image = Image::new(WIDTH, HEIGHT);
+    let camera = Camera::new(90.0, 1.0, ASPECT_RATIO);
+    image.trace_to_ppm_with(camera, world); */
+}
+
+fn main() {
+    a();
+    // b();
 }
