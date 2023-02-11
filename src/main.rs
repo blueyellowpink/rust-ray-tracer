@@ -14,9 +14,9 @@ use rust_ray_tracer::{
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const WIDTH: usize = 256;
-const HEIGHT: usize = 144;
+const HEIGHT: usize = ((WIDTH as f64) / ASPECT_RATIO) as usize;
 const SAMPLES_PER_PIXEL: usize = 50;
-const MAX_RAY_BOUNCE_DEPTH: usize = 5;
+const MAX_RAY_BOUNCE_DEPTH: usize = 50;
 const ANTI_ALIAS: bool = true;
 
 trait RayTraceable {
@@ -162,13 +162,20 @@ fn a() {
     )));
 
     let image = Image::new(WIDTH, HEIGHT);
+
+    let lookfrom = Point3D::new(3.0, 3.0, 2.0);
+    let lookat = Point3D::new(0.0, 0.0, -1.0);
+    let dist_to_focus = (lookfrom - lookat).length();
+    let aperture = 1.0;
     let camera = Camera::new(
-        Point3D::new(-2.0, 2.0, 1.0),
-        Point3D::new(0.0, 0.0, -1.0),
+        lookfrom,
+        lookat,
         Vec3D::new(0.0, 1.0, 0.0),
         20.0,
         1.0,
         ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
     );
     image.trace_to_ppm_with(camera, world);
 }
