@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Range;
 
 use crate::vec::Vec3D;
 
@@ -14,7 +15,7 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn new(red: f64, green: f64, blue: f64) -> Color {
+    pub fn new(red: f64, green: f64, blue: f64) -> Self {
         Color::RGB(Vec3D::new(red, green, blue))
     }
 
@@ -28,6 +29,10 @@ impl Color {
             Color::RGB(vec3) => *vec3,
         }
     }
+
+    /* pub fn random(range: Range<f64>) -> Self {
+        Color::RGB(Vec3D::random(range))
+    } */
 }
 
 impl fmt::Display for Color {
