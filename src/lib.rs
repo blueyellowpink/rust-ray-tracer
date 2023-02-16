@@ -5,7 +5,7 @@ pub mod ray;
 pub mod vec;
 
 pub mod hit {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     use crate::{
         material::Scatter,
@@ -16,7 +16,7 @@ pub mod hit {
     pub struct HitRecord {
         pub hit_point: Point3D,
         pub normal: Vec3D,
-        pub material: Rc<dyn Scatter>,
+        pub material: Arc<dyn Scatter>,
         pub t: f64,
         pub front_face: bool,
     }
@@ -25,7 +25,7 @@ pub mod hit {
         pub fn new(
             hit_point: Point3D,
             normal: Vec3D,
-            material: Rc<dyn Scatter>,
+            material: Arc<dyn Scatter>,
             t: f64,
             ray: &Ray,
         ) -> Self {
@@ -41,13 +41,13 @@ pub mod hit {
         }
     }
 
-    pub trait Hit {
+    pub trait Hit: Send + Sync {
         fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     }
 }
 
 pub mod object {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     use crate::{
         hit::{Hit, HitRecord},
@@ -60,11 +60,11 @@ pub mod object {
     pub struct Sphere {
         pub center: Point3D,
         pub radius: f64,
-        pub material: Rc<dyn Scatter>,
+        pub material: Arc<dyn Scatter>,
     }
 
     impl Sphere {
-        pub fn new(center: Point3D, radius: f64, material: Rc<dyn Scatter>) -> Self {
+        pub fn new(center: Point3D, radius: f64, material: Arc<dyn Scatter>) -> Self {
             Self {
                 center,
                 radius,

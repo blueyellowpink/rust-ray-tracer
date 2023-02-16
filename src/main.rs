@@ -1,6 +1,8 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use rand::Rng;
+use rayon::iter::IntoParallelIterator;
+use rayon::iter::ParallelIterator;
 
 use rust_ray_tracer::{
     camera::Camera,
@@ -41,7 +43,7 @@ impl Image {
         }
     }
 
-    fn fill_center_circle(&mut self, radius: f64) {
+    /* fn fill_center_circle(&mut self, radius: f64) {
         let origin = Point2D {
             x: (self.width / 2) as f64,
             y: (self.height / 2) as f64,
@@ -57,7 +59,7 @@ impl Image {
                 }
             }
         }
-    }
+    } */
 
     fn write_ppm_stdout(&self, fg: Color, bg: Color) {
         println!("P3");
@@ -75,7 +77,7 @@ impl Image {
         }
     }
 
-    fn fill_intersect(&mut self) {
+    /* fn fill_intersect(&mut self) {
         let ray_intersect_sphere = |_x: f64, _y: f64| -> bool { false };
 
         for y in 0..HEIGHT {
@@ -85,7 +87,7 @@ impl Image {
                 }
             }
         }
-    }
+    } */
 }
 
 impl RayTraceable for Image {
@@ -100,27 +102,45 @@ impl RayTraceable for Image {
         println!("{} {}", self.width, self.height);
         println!("255");
 
-        let mut rng = rand::thread_rng();
+        /* let mut rng = rand::thread_rng();
         for y in (0..self.height).rev() {
             for x in 0..self.width {
-                if ANTI_ALIAS {
+                let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0).to_vec3d();
+                for _ in 0..SAMPLES_PER_PIXEL {
+                    let (u, v) = get_uv(x, y, rng.gen::<f64>(), rng.gen::<f64>());
+                    let ray = camera.get_ray(u, v);
+                    let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
+                    sum_color = sum_color + color;
+                }
+                println!(
+                    "{}",
+                    Color::RGB(sum_color.format_color(SAMPLES_PER_PIXEL as u64))
+                );
+            }
+        } */
+
+        for y in (0..self.height).rev() {
+            eprintln!("{}", (self.height - y) / self.height * 100);
+            let scanlines: Vec<Vec3D> = (0..self.width)
+                .into_par_iter()
+                .map(|x| {
                     let mut sum_color: Vec3D = Color::new(0.0, 0.0, 0.0).to_vec3d();
                     for _ in 0..SAMPLES_PER_PIXEL {
-                        let (u, v) = get_uv(x, y, rng.gen(), rng.gen());
+                        let mut rng = rand::thread_rng();
+                        let (u, v) = get_uv(x, y, rng.gen::<f64>(), rng.gen::<f64>());
                         let ray = camera.get_ray(u, v);
                         let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
                         sum_color = sum_color + color;
                     }
-                    println!(
-                        "{}",
-                        Color::RGB(sum_color.format_color(SAMPLES_PER_PIXEL as u64))
-                    );
-                } else {
-                    let (u, v) = get_uv(x, y, 0.0, 0.0);
-                    let ray = camera.get_ray(u, v);
-                    let color = ray.color(&world, MAX_RAY_BOUNCE_DEPTH).to_vec3d();
-                    println!("{}", Color::RGB(color.format_color(1)));
-                }
+                    sum_color
+                })
+                .collect();
+
+            for line in scanlines {
+                println!(
+                    "{}",
+                    Color::RGB(line.format_color(SAMPLES_PER_PIXEL as u64))
+                );
             }
         }
     }
@@ -130,7 +150,7 @@ fn random_world() -> World {
     let mut rng = rand::thread_rng();
     let mut world = World::new();
 
-    let ground_mat = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let ground_mat = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
     let ground_sphere = Sphere::new(Point3D::new(0.0, -1000.0, 0.0), 1000.0, ground_mat);
 
     world.push(Box::new(ground_sphere));
@@ -147,7 +167,7 @@ fn random_world() -> World {
             if choose_mat < 0.8 {
                 // Diffuse
                 let albedo = Color::RGB(Vec3D::random(0.0..1.0) * Vec3D::random(0.0..1.0));
-                let sphere_mat = Rc::new(Lambertian::new(albedo));
+                let sphere_mat = Arc::new(Lambertian::new(albedo));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
 
                 world.push(Box::new(sphere));
@@ -155,13 +175,13 @@ fn random_world() -> World {
                 // Metal
                 let albedo = Color::RGB(Vec3D::random(0.4..1.0));
                 let fuzz = rng.gen_range(0.0..0.5);
-                let sphere_mat = Rc::new(Metal::new(albedo, fuzz));
+                let sphere_mat = Arc::new(Metal::new(albedo, fuzz));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
 
                 world.push(Box::new(sphere));
             } else {
                 // Glass
-                let sphere_mat = Rc::new(Dielectric::new(1.5));
+                let sphere_mat = Arc::new(Dielectric::new(1.5));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
 
                 world.push(Box::new(sphere));
@@ -169,9 +189,9 @@ fn random_world() -> World {
         }
     }
 
-    let mat1 = Rc::new(Dielectric::new(1.5));
-    let mat2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    let mat3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+    let mat1 = Arc::new(Dielectric::new(1.5));
+    let mat2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let mat3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
 
     let sphere1 = Sphere::new(Point3D::new(0.0, 1.0, 0.0), 1.0, mat1);
     let sphere2 = Sphere::new(Point3D::new(-4.0, 1.0, 0.0), 1.0, mat2);
@@ -185,11 +205,11 @@ fn random_world() -> World {
 }
 
 fn a() {
-    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(Dielectric::new(1.5));
-    let material_left_inner = Rc::new(Dielectric::new(1.1));
-    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+    let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Dielectric::new(1.5));
+    let material_left_inner = Arc::new(Dielectric::new(1.1));
+    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
 
     let mut world = World::new();
     world.push(Box::new(Sphere::new(
@@ -241,8 +261,8 @@ fn b() {
     let r: f64 = (std::f64::consts::PI / 4.0).cos();
     let mut world = World::new();
 
-    let mat_left = Rc::new(Lambertian::new(Color::new(0.0, 0.0, 1.0)));
-    let mat_right = Rc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
+    let mat_left = Arc::new(Lambertian::new(Color::new(0.0, 0.0, 1.0)));
+    let mat_right = Arc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
 
     let sphere_left = Sphere::new(Point3D::new(-r, 0.0, -1.0), r, mat_left);
     let sphere_right = Sphere::new(Point3D::new(r, 0.0, -1.0), r, mat_right);

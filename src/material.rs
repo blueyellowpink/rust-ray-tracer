@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::{color::Color, hit::HitRecord, ray::Ray, vec::Vec3D};
 
-pub trait Scatter {
+pub trait Scatter: Send + Sync {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)>;
 }
 
